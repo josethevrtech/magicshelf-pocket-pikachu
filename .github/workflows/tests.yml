@@ -1,0 +1,12 @@
+name: Native emulator checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y g++ pkg-config qt6-declarative-dev qt6-base-dev libegl1-mesa-dev libgles2-mesa-dev libcairo2-dev libjson-c-dev libpulse-dev
+      - run: python3 tools/fetch_sdk.py && python3 tools/fetch_emulator.py
+      - run: ./build.sh --tests-only

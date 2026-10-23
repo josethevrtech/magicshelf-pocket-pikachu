@@ -1,0 +1,82 @@
+{
+  "default_bindings": [
+    {
+      "controller_type": "frame_controller",
+      "binding_url": "bindings_frame_controller.json"
+    }
+  ],
+  "actions": [
+    {
+      "name": "/actions/pocket/in/scroll",
+      "type": "vector2",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/click",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/back",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/friendship",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/settings",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/home",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/left",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/right",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/up",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/down",
+      "type": "boolean",
+      "requirement": "optional"
+    }
+  ],
+  "action_sets": [
+    {
+      "name": "/actions/pocket",
+      "usage": "leftright"
+    }
+  ],
+  "localization": [
+    {
+      "language_tag": "en_US",
+      "/actions/pocket": "Pocket Pikachu",
+      "/actions/pocket/in/scroll": "Holding hand: distance; free hand: D-pad",
+      "/actions/pocket/in/click": "A / Confirm",
+      "/actions/pocket/in/back": "B / Back",
+      "/actions/pocket/in/friendship": "X / Friendship",
+      "/actions/pocket/in/settings": "Y / Settings",
+      "/actions/pocket/in/home": "Return to shelf",
+      "/actions/pocket/in/left": "D-pad left",
+      "/actions/pocket/in/right": "D-pad right",
+      "/actions/pocket/in/up": "D-pad up",
+      "/actions/pocket/in/down": "D-pad down"
+    }
+  ]
+}

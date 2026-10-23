@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "api_version": 2,
+  "id": "org.magicshelf.pocket-pikachu",
+  "version": "0.3.2",
+  "name": "Pocket Pikachu",
+  "description": "A nostalgic Pocket Pikachu with headset steps, original-style settings, a daily alarm and native controller play.",
+  "author": "josethevrtech",
+  "license": "MIT (integration); third-party assets retain their rights",
+  "platform": "linux",
+  "architecture": "aarch64",
+  "entrypoint": "bin/pocket-pikachu",
+  "permissions": [
+    "vr-overlay"
+  ],
+  "memory_mb": 768,
+  "control_entrypoint": "bin/control",
+  "startup_timeout_sec": 30,
+  "category": "Companions",
+  "tagline": "Every step brings you closer.",
+  "about": "Walk, work out, and grow your friendship with Pikachu. Earn watts for gifts and slots. Pick up the handheld and push or pull it with your stick. Play with its buttons or controllers, set its clock and alarm, and switch its beeps on or off.",
+  "credits": [
+    {
+      "name": "Alberto-rp",
+      "role": "Pocket Pikachu emulator",
+      "url": "https://github.com/Alberto-rp/Pocket-pikachu-emulator",
+      "license": "Fan project; original rights retained."
+    },
+    {
+      "name": "Wikiti",
+      "role": "Pocket Pikachu handheld model",
+      "url": "https://sketchfab.com/3d-models/pocket-pikachu-f9ea485010804602b96e1ee3f0c5d241",
+      "license": "Sketchfab Standard; user-provided asset."
+    }
+  ],
+  "links": [
+    {
+      "label": "Pocket Pikachu on GitHub",
+      "url": "https://github.com/josethevrtech/magicshelf-pocket-pikachu"
+    },
+    {
+      "label": "Emulator source",
+      "url": "https://github.com/Alberto-rp/Pocket-pikachu-emulator"
+    }
+  ],
+  "screenshots": [
+    {
+      "url": "https://github.com/josethevrtech/magicshelf-pocket-pikachu/releases/download/v0.3.2/pocket-pikachu.png",
+      "caption": "Pocket Pikachu\u2019s live pixel display inside Wikiti\u2019s yellow handheld model."
+    }
+  ]
+}

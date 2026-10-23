@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/Alberto-rp/Pocket-pikachu-emulator",
+  "revision": "0375ada314b6d40fa1c40bbefcd798ccf375fbe5",
+  "files": {
+    "script.js": "088776021883615185f04923769d6923e9a7f4fc01a79ea494e85b0db0c90060",
+    "anims.json": "71492f73d1a77bbf9ae3b950f160602a251ff4e07bf1e03266806d14583079ad",
+    "README.md": "64ce3b62c6633a1c2470e94ac09a19e5e2120c4425bf5ea15af729c00bf2f0e5",
+    "img/backgorundPikaSmall.png": "90f88fa840ca18b4bb2e24db5ca5586904682eb896c11f3df4587f66a49bbe73"
+  }
+}
