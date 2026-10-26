@@ -39,6 +39,9 @@ holding controller. **Hold the holding stick's click and move that stick up/down
 to push/pull distance; release the click and center the stick before resuming
 play. Stick-click no longer confirms. A/B/X/Y remain confirm/back/friendship/settings.
 The holding stick takes priority when deflected; otherwise the free stick works.
+On Steam Frame, dashboard-suppressed actions use controller visualization state
+for individual buttons and stick directions. This fallback is active only while
+pointing at, reaching for or holding Pocket Pikachu; it changes no SteamVR settings.
 Dashboard scroll cannot also move distance. **Shake the held controller back and
 forth deliberately** to return to the dock, with a haptic confirmation. Menu/View
 also returns home. Pickup, release, focus changes and recovery discard held

@@ -57,3 +57,25 @@ D-pad and A/B/X/Y; use holding-stick click + vertical movement for depth; releas
 with a stick deflected and verify no menu input until centered; shake deliberately
 and verify dock return without re-pickup; move the Steam window and compare
 Pocket Pikachu with Digivice. Check dashboard open and closed.
+
+## 0.3.10 controller follow-up
+
+The user confirmed shake recovery and smooth dock following, but reported failed
+controller buttons and distance adjustment. During live A/X/stick testing, the
+creation remained focused and held while all named gameplay actions were
+inactive. The legacy controller-state fallback was unavailable. Raising overlay
+priority did not restore the route and is not retained in the final candidate.
+
+A utility probe observed distinct button presses through the installed driver's
+controller visualization components. The focused Frame-only fallback now reads
+those components for buttons and matches stick/D-pad orientations against driver
+generated reference poses. It does not change global SteamVR input settings.
+Trigger-held pickup now watches the trigger component instead of treating every
+mouse-button-up event as a release, so face buttons can be used while holding.
+Diagnostics expose focus, action errors, fallback use and input/depth counts.
+
+All six native suites passed on Frame. A live driver check passed 441 off-grid
+stick samples per hand with maximum error 0.024; initialization and checks took
+6.6 ms / 5.3 ms. The final candidate passed On/Off and save-preservation checks;
+SteamVR and storefront PIDs and other creation states were unchanged. Physical
+end-to-end button/D-pad/depth confirmation is pending. No public release made.

@@ -117,6 +117,7 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
                 {"frame_ms",frameMs},{"peak_frame_ms",peakFrameMs},{"frame_count",double(frameCount)},{"slow_frames",double(slowFrames)},{"frame_sync",frameSync},{"sync_errors",double(syncErrors)},
                 {"motion_samples",double(motionSamples)},{"tracked_samples",double(trackedSamples)},{"motion_steps",double(motionSteps)},{"headset_worn",worn},{"headset_tracked",poses[0].bPoseIsValid},{"docked",docked},{"visible",ov->IsOverlayVisible(device)},
                 {"friendship",frame.property("friendship").toInt()},{"audio_connected",audio.ready()},{"audio_cues",int(audio.count())},
+                {"input_focused",nav.focusedNow},{"input_role",nav.roleNow},{"input_error",nav.inputError},{"input_digital_error",nav.digitalError},{"input_active_mask",int(nav.activeMask)},{"input_pressed_mask",int(nav.pressedMask)},{"input_focus_changes",double(nav.focusChanges)},{"input_button_edges",double(nav.buttonEdges)},{"input_axis_x",nav.axisX},{"input_axis_y",nav.axisY},{"input_adjust",nav.adjusting},{"input_fallback",nav.usingFallback},
                 {"held",grab.active},{"grab_distance",grab.distance},{"depth_moves",double(depthMoves)},{"repositioning",repositioning},{"controller_inputs",double(controllerInputs)},
                 {"sound_enabled",frame.property("soundEnabled").toBool()},{"device_ui",frame.property("deviceUi").toString()},{"alarm_enabled",frame.property("alarmEnabled").toBool()},{"alarm_ringing",frame.property("alarmRinging").toBool()}};
             // Telemetry needs atomic replacement, not a durable fsync on the
@@ -126,7 +127,13 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
         }
         if(grab.active){
             if(!poses[grab.controller].bPoseIsValid||!poses[0].bPoseIsValid)release();
-            else if(grab.watchTriggerRelease){VRControllerState_t state{};if(VRSystem()->GetControllerState(grab.controller,&state,sizeof(state))&&!(state.ulButtonPressed&ButtonMaskFromId(k_EButton_SteamVR_Trigger)))release();}
+            else if(grab.watchTriggerRelease){
+                auto role=int(VRSystem()->GetControllerRoleForTrackedDeviceIndex(grab.controller));
+                RenderModel_ComponentState_t trigger{};
+                if(role>=1&&role<=2&&nav.frame.component(role,nav.hand[role-1],"trigger",trigger)){
+                    if(!(trigger.uProperties&VRComponentProperty_IsPressed))release();
+                }else{VRControllerState_t state{};if(VRSystem()->GetControllerState(grab.controller,&state,sizeof(state))&&!(state.ulButtonPressed&ButtonMaskFromId(k_EButton_SteamVR_Trigger)))release();}
+            }
         }
         while(ov->PollNextOverlayEvent(device,&e,sizeof(e))){
             if(dockResetEvent(e.eventType)){toDock();pedometer.reset();continue;}
@@ -135,7 +142,7 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
                 // Frame fallback. Scroll must not also change placement.
                 continue;
             }
-            if(e.eventType==VREvent_MouseButtonUp&&grab.active&&!gripHeld&&(e.trackedDeviceIndex==grab.controller||e.trackedDeviceIndex==k_unTrackedDeviceIndexInvalid||e.trackedDeviceIndex==0)){release();continue;}
+            if(e.eventType==VREvent_MouseButtonUp&&grab.active&&!gripHeld&&!grab.watchTriggerRelease&&(e.trackedDeviceIndex==grab.controller||e.trackedDeviceIndex==k_unTrackedDeviceIndexInvalid||e.trackedDeviceIndex==0)){release();continue;}
             if(!poses[0].bPoseIsValid||(e.eventType!=VREvent_MouseMove&&e.eventType!=VREvent_MouseButtonDown))continue;
             if(grab.active&&e.trackedDeviceIndex==grab.controller)continue;
             if(e.eventType==VREvent_MouseButtonDown&&e.data.mouse.button!=VRMouseButton_Left)continue;
@@ -153,6 +160,8 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
                 V grabbed=point(lastModel,mul(hit,lastSize));
                 if(docked){world=lastModel;V restored=point(world,mul(hit,size));for(int i=0;i<3;i++)world[12+i]+=grabbed[i]-restored[i];docked=false;placed=true;}
                 VRControllerState_t state{};bool watch=VRSystem()->GetControllerState(index,&state,sizeof(state))&&(state.ulButtonPressed&ButtonMaskFromId(k_EButton_SteamVR_Trigger));
+                int role=int(VRSystem()->GetControllerRoleForTrackedDeviceIndex(index));RenderModel_ComponentState_t trigger{};
+                if(role>=1&&role<=2&&nav.frame.component(role,nav.hand[role-1],"trigger",trigger))watch=trigger.uProperties&VRComponentProperty_IsPressed;
                 shake.reset();grab.beginAt(index,fromvr(poses[index].mDeviceToAbsoluteTracking),world,grabbed,watch);ov->TriggerLaserMouseHapticVibration(device,.03f,80,.2f);
             }
         }
