@@ -89,3 +89,6 @@ pickup, its stick controls depth and its physical D-pad navigates. Face buttons
 retain their mappings. Both placement and navigation require neutral after pickup.
 The existing Frame fallback, trigger release fix, shake recovery and smooth dock
 following are preserved. Controller checks passed in WSL and on Frame.
+
+The user reported 0.3.11 is much better and authorized publication on 2026-10-26.
+The release uses the exact installed package; no rebuild or save migration.
