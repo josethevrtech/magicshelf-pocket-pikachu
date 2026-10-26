@@ -55,6 +55,11 @@
       "name": "/actions/pocket/in/down",
       "type": "boolean",
       "requirement": "optional"
+    },
+    {
+      "name": "/actions/pocket/in/grip",
+      "type": "boolean",
+      "requirement": "optional"
     }
   ],
   "action_sets": [
@@ -76,7 +81,8 @@
       "/actions/pocket/in/left": "D-pad left",
       "/actions/pocket/in/right": "D-pad right",
       "/actions/pocket/in/up": "D-pad up",
-      "/actions/pocket/in/down": "D-pad down"
+      "/actions/pocket/in/down": "D-pad down",
+      "/actions/pocket/in/grip": "Hold grip to pick up; release to place"
     }
   ]
 }
