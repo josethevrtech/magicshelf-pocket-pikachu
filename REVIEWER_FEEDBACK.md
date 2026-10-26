@@ -92,3 +92,27 @@ following are preserved. Controller checks passed in WSL and on Frame.
 
 The user reported 0.3.11 is much better and authorized publication on 2026-10-26.
 The release uses the exact installed package; no rebuild or save migration.
+
+## 0.3.12 unpublished responsiveness repair
+
+The user reported renewed dragging lag and failed shake recovery after release.
+A Frame probe reproduced 211 ms slot-game ticks on the tracking thread; the shake
+detector rejects gaps above 120 ms. VR emulation now runs on a dedicated worker,
+including durable saves. Typed immutable snapshots cross threads and are rebuilt
+as QJSValues only in the display engine. Input requests queue without blocking
+tracking. Shutdown drains the queue and saves progress; startup failures propagate.
+
+Native pixel-list includes replaced 46 callback membership checks, reducing the
+same probe from 3183 ms aggregate / 211 ms worst tick to 259 ms / 25 ms. No game
+rules or gesture thresholds changed. Seven native suites passed on Frame; a new
+250 ms worker-stall test kept 50 tracking-facing updates responsive (0.023 ms
+aggregate), preserved queued steps and verified startup error handling. On/Off
+kept progress and other creations; SteamVR PID 2561 and storefront PID 114962
+were unchanged. Physical drag/shake testing is pending. No public update published.
+
+The user reported 0.3.12 is much better during the requested headset test.
+0.3.13 adds a beginner guide to the creation's About description: startup, Frame
+controls, top-icon navigation, steps/watts, gifts, slots, settings/alarm and
+placement. The 1,883-character description passes the 2,000-character contract.
+Installed 0.3.13 has the identical binary to tested 0.3.12; other creations and
+SteamVR/storefront PIDs remained unchanged. This candidate is not published.

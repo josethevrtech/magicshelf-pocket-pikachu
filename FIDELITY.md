@@ -99,3 +99,26 @@ A live driver-pose check exercised 441 off-grid stick values for each hand:
 maximum axis error 0.024 on both, with initialization plus checks under 7 ms.
 This verifies pose decoding, not physical end-to-end input. Actual D-pad and
 button operation still require user confirmation on the installed candidate.
+
+## 0.3.12 responsiveness candidate
+
+The released 0.3.11 shared the VR tracking thread with emulator timers and saves.
+A Frame slot-game probe measured a 211 ms tick, exceeding ShakeToDock's 120 ms
+sample-gap limit. Slow ticks both delayed dragging and repeatedly reset gestures.
+The runtime had also recorded multi-second loop stalls. The exact attribution of
+those longer stalls was not established by the short probe.
+
+VR now owns a separate emulator worker. Only immutable value snapshots and queued
+buttons cross threads; each QJSEngine and its QJSValues stay on their owning
+thread. Atomic durable saves remain on the worker and shutdown flushes pending
+inputs. Tracking, controller following and shake sampling consume the latest LCD
+frame without waiting for simulation. Worker timing and dropped-input counts are
+included in diagnostics. Desktop/preview modes retain synchronous emulation.
+
+46 string-pixel membership checks now use native includes rather than invoking a
+JavaScript predicate per candidate. The same Frame probe dropped from 3183 ms
+aggregate / 211 ms worst tick to 259 ms aggregate / 25 ms worst tick. Existing
+emulator behavior checks still apply; this changes no friendship or slot rules.
+A regression test blocks the worker for 250 ms and checks that tracking-facing
+calls return while it remains blocked, then verifies queued steps and persistence.
+Physical dragging and shake recovery need headset verification on this candidate.
