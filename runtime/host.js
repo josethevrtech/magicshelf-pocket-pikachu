@@ -125,8 +125,8 @@ Object.defineProperty(document, 'cookie', {
 function element(parent, classes, id) { return parent.appendChild(new Element(classes, id)); }
 var __screenContainer = element(document, 'screenContainer');
 var __menu = element(__screenContainer, 'menuBar');
-['clockMenu','giftMenu','gameMenu'].forEach(id => element(__menu, 'img-menu', id));
-element(__menu, 'walkCounter');
+var __menuIcons=['clockMenu','giftMenu','gameMenu'].map(id => element(__menu, 'img-menu', id));
+var __stepCounter=element(__menu, 'walkCounter');
 var __screen = element(__screenContainer, 'screen');
 var __petFrame=null;
 function __readPixels(){
@@ -181,10 +181,12 @@ function __dispatch(button){
     document.querySelector('#' + (button === 'shake' ? button : button + '-button')).click();
 }
 function __snapshot() {
+    const pixels=__alarmDisplay(__deviceDisplay(__readPixels()));
     return {
-        pixels: __alarmDisplay(__deviceDisplay(__readPixels())),
-        counter: document.querySelector('.walkCounter').innerHTML,
-        icons: ['clockMenu','giftMenu','gameMenu'].map(id => document.querySelector('#'+id).classList.contains('selected')),
+        pixels, pixelLevels:pixels.join(''),
+        // Keep stable references: generic DOM lookup walks all 1080 pixels.
+        counter: __stepCounter.innerHTML,
+        icons: __menuIcons.map(icon => icon.classList.contains('selected')),
         status: animStatus, steps: pokeStatus.steps, totalSteps: pokeStatus.totalSteps, watts: pokeStatus.watts,
         friendship: pokeStatus.friendshipLevel,unlocks:[hasReach150,hasReach300,hasReach450],complete:pokeStatus.reachEnd,sleepHour:pokeStatus.sleepHour,timerCount: __timers.size,
         soundEnabled:__device.sound,deviceUi:__deviceUi,deviceSelection:__deviceSelection,clockEditing:!!__clockDraft,clockHour:__clockDraft?__clockDraft.hour:-1,clockMinute:__clockDraft?__clockDraft.minute:-1,

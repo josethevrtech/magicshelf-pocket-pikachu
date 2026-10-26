@@ -34,11 +34,17 @@ so a same-day restart cannot incorrectly drop friendship to the Gone state.
 
 Grab the housing or bar beneath it to pick it up. While held, either hand can
 operate it: **A** confirms, **B** goes back, **X** shows friendship and **Y** opens
-settings. The **holding hand's stick pushes the handheld farther away or pulls it
-closer**, just like the other creations; no bumper is needed. The **free hand's
-stick or left D-pad** navigates the pet. SteamVR dashboard scroll events also
-move distance when SteamVR owns the stick. Only the grabbing hand can move it.
-**Menu / View** returns it to the shelf. You can also drop it near the shelf.
+settings. **The holding stick pushes/pulls distance directly; no click is needed.**
+When held in the right hand, use the **left stick or left D-pad** for gameplay.
+When held in the left hand, its stick adjusts distance and its **D-pad** plays.
+A/B/X/Y remain confirm/back/friendship/settings. Center sticks after pickup to
+arm them. Dashboard-suppressed input uses the focused Frame controller fallback.
+Dashboard scroll cannot also move distance. **Shake the held controller back and
+forth deliberately** to return to the dock, with a haptic confirmation. Menu/View
+also returns home. Pickup, release, focus changes and recovery discard held
+buttons/directions until fresh input. Headset walking still earns steps; controller
+shake recovery does not award steps.
+You can also drop it near the shelf.
 Controller controls work while pointing at it, using the pointing hand.
 
 On the clock screen, **A toggles the alarm ON/OFF**. With it On, press **Down**

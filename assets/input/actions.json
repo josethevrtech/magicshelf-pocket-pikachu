@@ -72,7 +72,7 @@
     {
       "language_tag": "en_US",
       "/actions/pocket": "Pocket Pikachu",
-      "/actions/pocket/in/scroll": "Holding hand: distance; free hand: D-pad",
+      "/actions/pocket/in/scroll": "Left stick: navigation; holding stick: distance",
       "/actions/pocket/in/click": "A / Confirm",
       "/actions/pocket/in/back": "B / Back",
       "/actions/pocket/in/friendship": "X / Friendship",

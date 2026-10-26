@@ -36,6 +36,7 @@ int main(int argc,char**argv) {
             for(int i=0;i<20;i++){game.press("shake");game.tick(300);}
             game.tick(1500);steps=game.snapshot().property("steps").toInt();
             require(steps==20&&game.snapshot().property("watts").toInt()==51,"Every twenty steps earns exactly one watt");
+            require(game.evaluate("__snapshot().pixelLevels===__snapshot().pixels.join('') && __snapshot().counter===document.querySelector('.walkCounter').innerHTML && JSON.stringify(__snapshot().icons)===JSON.stringify(['clockMenu','giftMenu','gameMenu'].map(id=>document.querySelector('#'+id).classList.contains('selected')))").toBool(),"Fast display snapshot agrees with pixel data, counter and selected icons");
             game.tick(65000);require(!game.snapshot().property("status").toString().isEmpty(),"The requested continuous LCD power survives idle time");
             require(game.evaluate("Number.isFinite(Number(calculatePastHours()))").toBool(),"Elapsed time parses saved hatch date");
             game.press("state");require(game.snapshot().property("status").toString()=="state","Friendship button");

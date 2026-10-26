@@ -25,6 +25,13 @@ int main(){try{
  for(int i=0;i<100;i++,t+=1./90)require(!steps.update({0,1.7f,0},t,false),"Untracked/unworn headset");
  steps.reset();for(int i=0;i<100;i++,t+=1./90)require(!steps.update({float(i%2)*5,1.7f,0},t),"Tracking teleport");
  steps.reset();for(int i=0;i<900;i++,t+=1./90)require(!steps.update({0,1.3f+float(i)*.0005f,0},t),"Slow posture change");
+ ShakeToDock shake;int returns=0;
+ for(int i=0;i<180;i++)returns+=shake.update({.002f*sinf(i),0,0},i/90.);
+ require(returns==0,"Controller jitter cannot dock");
+ shake.reset();
+ for(int i=0;i<180;i++)returns+=shake.update({.07f*sinf(i*2*M_PI*3/90),0,0},i/90.);
+ require(returns>=1,"Deliberate controller shakes return to dock");
+ shake.reset();for(int i=0;i<100;i++)require(!shake.update({i*.002f,0,0},i/90.),"Smooth window/hand movement cannot dock");
  std::cout<<"Headset motion: jitter, cadence, tracking loss, teleports and posture checks passed\n";
  return 0;
 }catch(std::exception&e){std::cerr<<e.what()<<"\n";return 1;}}

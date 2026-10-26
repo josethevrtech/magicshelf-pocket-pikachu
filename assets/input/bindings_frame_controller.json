@@ -1,7 +1,7 @@
 {
   "controller_type": "frame_controller",
   "name": "Pocket Pikachu",
-  "description": "Holding hand stick pushes and pulls distance. Free hand stick or left D-pad navigates. A confirms, B goes back, X shows friendship, Y opens settings. Menu/View returns to shelf.",
+  "description": "Holding stick pushes/pulls directly. Left stick navigates when right hand holds; left D-pad always navigates. A/B/X/Y: confirm/back/friendship/settings. Shake or Menu/View returns home.",
   "bindings": {
     "/actions/pocket": {
       "sources": [
@@ -11,9 +11,6 @@
           "inputs": {
             "position": {
               "output": "/actions/pocket/in/scroll"
-            },
-            "click": {
-              "output": "/actions/pocket/in/click"
             }
           }
         },
@@ -68,9 +65,6 @@
           "inputs": {
             "position": {
               "output": "/actions/pocket/in/scroll"
-            },
-            "click": {
-              "output": "/actions/pocket/in/click"
             }
           }
         },
