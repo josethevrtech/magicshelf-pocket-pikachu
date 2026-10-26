@@ -79,3 +79,13 @@ stick samples per hand with maximum error 0.024; initialization and checks took
 6.6 ms / 5.3 ms. The final candidate passed On/Off and save-preservation checks;
 SteamVR and storefront PIDs and other creation states were unchanged. Physical
 end-to-end button/D-pad/depth confirmation is pending. No public release made.
+
+## 0.3.11 direct placement controls
+
+The user confirmed sticks work in 0.3.10, but requested left-hand navigation
+and restoration of direct push/pull. The holding stick now adjusts depth without
+clicking. With right-hand pickup, the left stick/D-pad navigates. With left-hand
+pickup, its stick controls depth and its physical D-pad navigates. Face buttons
+retain their mappings. Both placement and navigation require neutral after pickup.
+The existing Frame fallback, trigger release fix, shake recovery and smooth dock
+following are preserved. Controller checks passed in WSL and on Frame.

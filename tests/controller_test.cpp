@@ -9,11 +9,13 @@ int main(){try{
  s.confirm=false;s.y=0;state.update(s,.022f);s.confirm=true;r=state.update(s,.022f);require(r.confirm,"A must work while held");
  require(!state.update(s,.022f).confirm,"A sends one press per squeeze");
  s.confirm=false;s.back=s.friendship=s.settings=true;r=state.update(s,.022f);require(r.back&&r.friendship&&r.settings,"B/X/Y remain available while held");
- s.back=s.friendship=s.settings=false;s.depthY=1;s.y=1;r=state.update(s,.022f);
- require(!r.depthAxis&&r.depthY==0&&r.y==1,"Normal holding-stick direction plays without moving depth");
- s.adjust=true;r=state.update(s,.022f);require(r.depthAxis&&r.depthY==1&&!r.y,"Stick-click chord adjusts depth without gameplay");
- s.adjust=false;r=state.update(s,.022f);require(!r.y,"Leaving adjustment with a deflected stick cannot navigate");
- s.y=0;state.update(s,.022f);s.y=-1;r=state.update(s,.022f);require(r.y==-1,"Fresh direction works after neutral");
+ s.back=s.friendship=s.settings=false;s.depthY=1;s.y=0;r=state.update(s,.022f);
+ require(r.depthAxis&&r.depthY==1&&!r.y,"Holding stick pushes directly without a click or gameplay input");
+ s.depthY=-1;r=state.update(s,.022f);require(r.depthY==-1&&!r.y,"Holding stick pulls directly");
+ s.y=1;r=state.update(s,.022f);require(r.y==1&&r.depthY==-1,"Left gameplay axis and holding depth stay independent");
+ s.held=false;state.update(s,.022f);s.held=true;r=state.update(s,.022f);
+ require(!r.depthY&&!r.y,"Pickup with deflected sticks cannot move or navigate");
+ s.depthY=0;s.y=0;state.update(s,.022f);s.depthY=1;r=state.update(s,.022f);require(r.depthY==1,"Depth resumes after neutral");
  s.y=0;s.right=true;r=state.update(s,.022f);require(r.x==1,"Physical left-controller D-pad remains available while held");
  s.held=false;r=state.update(s,.022f);require(!r.x,"Release cannot leak a held D-pad press");
  state.update({},.022f);s.held=true;s.confirm=true;r=state.update(s,.022f);require(!r.confirm&&!r.x,"Recovery clears buttons and D-pad until released");
@@ -35,5 +37,5 @@ int main(){try{
  grip.held=true;require(gripState.update(grip,.02f).grip,"Grip stays held after pickup");
  grip.grip=false;require(!gripState.update(grip,.02f).grip,"Releasing grip places the handheld");
  grip.focused=false;require(!gripState.update(grip,.02f).gripAvailable,"Tracking/focus loss releases the grip");
- std::cout<<"Gameplay directions, explicit depth chord, grip transitions, recovery and focus isolation passed\n";return 0;
+ std::cout<<"Separate gameplay and direct depth, grip transitions, recovery and focus isolation passed\n";return 0;
 }catch(std::exception&e){std::cerr<<e.what()<<"\n";return 1;}}

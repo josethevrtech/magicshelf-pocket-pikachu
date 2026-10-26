@@ -6,7 +6,7 @@
 #include <iostream>
 struct ControllerNav {
     vr::VRActionSetHandle_t set=0;
-    vr::VRActionHandle_t stick=0,adjust=0,confirm=0,back=0,friendship=0,settings=0,home=0,left=0,right=0,up=0,down=0,grip=0;
+    vr::VRActionHandle_t stick=0,confirm=0,back=0,friendship=0,settings=0,home=0,left=0,right=0,up=0,down=0,grip=0;
     vr::VRInputValueHandle_t hand[2]{};
     bool available=false;int lastRole=0;PocketControllerState state;FrameInput frame;
     bool focusedNow=false;int roleNow=0,inputError=0,digitalError=0;unsigned activeMask=0,pressedMask=0;
@@ -17,7 +17,7 @@ struct ControllerNav {
         if(error){std::cerr<<"Pocket Pikachu action manifest error "<<error<<"\n";return;}
         error=input->GetActionSetHandle("/actions/pocket",&set);
         auto handle=[&](const char* name,vr::VRActionHandle_t& result){auto e=input->GetActionHandle((std::string("/actions/pocket/in/")+name).c_str(),&result);if(e)error=e;};
-        handle("scroll",stick);handle("adjust",adjust);handle("click",confirm);handle("back",back);handle("friendship",friendship);handle("settings",settings);handle("home",home);
+        handle("scroll",stick);handle("click",confirm);handle("back",back);handle("friendship",friendship);handle("settings",settings);handle("home",home);
         handle("grip",grip);handle("left",left);handle("right",right);handle("up",up);handle("down",down);
         input->GetInputSourceHandle("/user/hand/left",&hand[0]);input->GetInputSourceHandle("/user/hand/right",&hand[1]);
         available=error==vr::VRInputError_None;std::cerr<<"Pocket Pikachu controller actions ready="<<available<<"\n";
@@ -49,7 +49,6 @@ struct ControllerNav {
             if(action==friendship)return button(2,"button_x");
             if(action==settings)return button(2,"button_y");
             if(action==home)return button(1,"button_view")||button(2,"button_menu");
-            if(action==adjust)return button(role,"thumbstick");
             if(held||role==1){float x=0,y=0;if(frame.axis(1,hand[0],x,y,true)){
                 if(action==left)return x<-.5f;if(action==right)return x>.5f;
                 if(action==up)return y>.5f;if(action==down)return y<-.5f;
@@ -72,13 +71,11 @@ struct ControllerNav {
             if(axis(hand[r-1],x,y))return true;
             usingFallback=true;return frame.axis(r,hand[r-1],x,y);
         };
-        sample.axis=readStick(role,sample.x,sample.y);
-        sample.adjust=held&&downAction(adjust,hand[role-1]);
-        sample.depthAxis=held&&sample.axis;sample.depthY=sample.y;
-        if(held&&!sample.adjust&&std::max(std::abs(sample.x),std::abs(sample.y))<=.25f){
-            float x=0,y=0;if(readStick(3-role,x,y)){sample.axis=true;sample.x=x;sample.y=y;}
-        }
-        axisX=sample.x;axisY=sample.y;adjusting=sample.adjust;
+        // Left stick plays while the right hand holds. If held in the left
+        // hand, its stick controls depth and the left physical D-pad plays.
+        sample.axis=(!held||role==2)&&readStick(held?1:role,sample.x,sample.y);
+        if(held){float unused=0;sample.depthAxis=readStick(role,unused,sample.depthY);}
+        axisX=sample.x;axisY=sample.y;adjusting=held&&sample.depthAxis;
         auto result=state.update(sample,dt);buttonEdges+=result.confirm+result.back+result.friendship+result.settings;return result;
     }
 };

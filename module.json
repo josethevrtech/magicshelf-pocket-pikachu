@@ -2,7 +2,7 @@
   "schema_version": 1,
   "api_version": 2,
   "id": "org.magicshelf.pocket-pikachu",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "name": "Pocket Pikachu",
   "description": "A nostalgic Pocket Pikachu with headset steps, original-style settings, a daily alarm and native controller play.",
   "author": "josethevrtech",
@@ -18,7 +18,7 @@
   "startup_timeout_sec": 30,
   "category": "Companions",
   "tagline": "Every step brings you closer.",
-  "about": "Walk, work out, and grow your friendship with Pikachu. Earn watts for gifts and slots. Grip to pick up; shake to return to the shelf. Either stick or the left D-pad plays, with A/B/X/Y for confirm/back/friendship/settings. Hold the holding-stick click while moving it to adjust distance. Set the clock, alarm and sound inside the handheld.",
+  "about": "Walk, work out, and grow your friendship with Pikachu. Earn watts for gifts and slots. Grip to pick up; shake to return to the shelf. The left stick or D-pad plays, with A/B/X/Y for confirm/back/friendship/settings. Move the holding stick up/down to push/pull directly. When held in the left hand, use its D-pad for play. Set the clock, alarm and sound inside the handheld.",
   "credits": [
     {
       "name": "Alberto-rp",
@@ -45,7 +45,7 @@
   ],
   "screenshots": [
     {
-      "url": "https://github.com/josethevrtech/magicshelf-pocket-pikachu/releases/download/v0.3.10/pocket-pikachu.png",
+      "url": "https://github.com/josethevrtech/magicshelf-pocket-pikachu/releases/download/v0.3.11/pocket-pikachu.png",
       "caption": "Pocket Pikachu\u2019s live pixel display inside Wikiti\u2019s yellow handheld model."
     }
   ]
