@@ -31,6 +31,11 @@ def prepare(source, destination):
             text=text.replace('endTime = new Date()', 'endTime = new Date(__deviceNow())')
             text=text.replace('var time = new Date()', 'var time = new Date(__deviceNow())')
             replace_once('Math.trunc((today - lastDate) / (1000 * 3600 * 24))', '__calendarDays(lastDate,today)')
+            # Pixel lists contain strings. Native includes preserves membership
+            # without invoking a JS callback for every candidate of every pixel.
+            pixel_test='.some(elem => elem == `num-${i}`)'
+            if text.count(pixel_test)!=46: raise ValueError('Unexpected pixel membership sites')
+            text=text.replace(pixel_test,'.includes(`num-${i}`)')
             # The yellow hardware stops at 999,999 lifetime steps. Remove the
             # fan emulator's shortened difficulty progression, retaining saves.
             replace_once('settings.dificultySelected = (localStorage.getItem("dificultyLevel") != null)? localStorage.getItem("dificultyLevel") : "medium";',

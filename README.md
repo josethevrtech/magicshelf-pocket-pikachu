@@ -32,6 +32,9 @@ battery to recharge. Pikachu still sleeps at night according to the original
 clock and can wake with movement. Saved browser-style dates are parsed explicitly
 so a same-day restart cannot incorrectly drop friendship to the Gone state.
 
+Emulation, animations and durable saves run separately from controller tracking,
+so slot-game updates cannot interrupt dragging or shake recovery.
+
 Grab the housing or bar beneath it to pick it up. While held, either hand can
 operate it: **A** confirms, **B** goes back, **X** shows friendship and **Y** opens
 settings. **The holding stick pushes/pulls distance directly; no click is needed.**

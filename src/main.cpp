@@ -1,4 +1,5 @@
 #include "emulator.h"
+#include "realtime_emulator.h"
 #include "magicshelf_sdk.h"
 #include "lcd.h"
 #include "controls.h"
@@ -65,7 +66,7 @@ public:
     void mouseReleaseEvent(QMouseEvent*)override{dragging=false;}
 };
 
-static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const std::string& package,const std::string& data,int lock){
+static int runVR(RealtimeEmulator& game,Renderer& renderer,HandheldAudio& audio,const std::string& package,const std::string& data,int lock){
     EVRInitError err;VR_Init(&err,VRApplication_Overlay);if(err)throw std::runtime_error(VR_GetVRInitErrorAsEnglishDescription(err));
     auto*ov=VROverlay();VROverlayHandle_t device=0;
     check(ov->CreateOverlay(getenv("MAGICSHELF_MODULE_KEY")?getenv("MAGICSHELF_MODULE_KEY"):DeviceKey,AppTitle,&device));
@@ -114,6 +115,7 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
         if(now-lastSave>std::chrono::seconds(1)){
             game.save();lastSave=now;auto frame=game.snapshot();
             QJsonObject status{{"steps",frame.property("steps").toInt()},{"watts",frame.property("watts").toInt()},{"status",frame.property("status").toString()},
+                {"emulator_work_ms",game.lastWorkMs()},{"emulator_peak_ms",game.peakWorkMs()},{"emulator_inputs",double(game.processedInputs())},{"emulator_dropped_inputs",double(game.droppedInputs())},
                 {"frame_ms",frameMs},{"peak_frame_ms",peakFrameMs},{"frame_count",double(frameCount)},{"slow_frames",double(slowFrames)},{"frame_sync",frameSync},{"sync_errors",double(syncErrors)},
                 {"motion_samples",double(motionSamples)},{"tracked_samples",double(trackedSamples)},{"motion_steps",double(motionSteps)},{"headset_worn",worn},{"headset_tracked",poses[0].bPoseIsValid},{"docked",docked},{"visible",ov->IsOverlayVisible(device)},
                 {"friendship",frame.property("friendship").toInt()},{"audio_connected",audio.ready()},{"audio_cues",int(audio.count())},
@@ -227,9 +229,15 @@ int main(int argc,char**argv){try{
     if(mode=="--show"||mode=="--dock"){if(!held)return 1;char text[32]{};pread(lock,text,31,0);pid_t pid=atoi(text);return pid>1&&kill(pid,mode=="--dock"?SIGUSR2:SIGUSR1)==0?0:1;}
     if(held)throw std::runtime_error("Pocket Pikachu is already running with this save");
     std::signal(SIGINT,stop);std::signal(SIGTERM,stop);std::signal(SIGUSR1,show);std::signal(SIGUSR2,home);
-    Emulator game(QString::fromStdString(package),QString::fromStdString(data));Renderer renderer(package);
+    Renderer renderer(package);
+    if(mode.empty()){
+        HandheldAudio audio;
+        RealtimeEmulator game(QString::fromStdString(package),QString::fromStdString(data),[&](const QString& button,const QString& state){audio.button(button.toStdString(),state.toStdString());});
+        return runVR(game,renderer,audio,package,data,lock);
+    }
+    Emulator game(QString::fromStdString(package),QString::fromStdString(data));
     if(mode=="--preview"){if(argc<3)throw std::runtime_error("--preview requires an output PNG path");game.tick(3500);game.press("enter");game.tick(6000);game.press("enter");game.tick(100);Canvas lcd(ScreenWidth,ScreenHeight);drawLCD(lcd,game.snapshot());renderer.screen(lcd);float yaw=argc>3?std::stof(argv[3]):-.18f;renderer.draw(identity(),rotated(yaw,.05f),{0,0,.3f},{0,0,.3f},.115f,1);renderer.save(argv[2]);return 0;}
     HandheldAudio audio;game.buttonSound=[&](const QString& button,const QString& state){audio.button(button.toStdString(),state.toStdString());};
     if(mode=="--desktop"){Desktop desktop(game,renderer);desktop.show();int code=app->exec();game.save();return code;}
-    if(!mode.empty())throw std::runtime_error("Unknown option");return runVR(game,renderer,audio,package,data,lock);
+    throw std::runtime_error("Unknown option");
 }catch(const std::exception&e){std::cerr<<"Pocket Pikachu: "<<e.what()<<"\n";return 1;}}

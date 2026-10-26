@@ -2,7 +2,7 @@
   "schema_version": 1,
   "api_version": 2,
   "id": "org.magicshelf.pocket-pikachu",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "name": "Pocket Pikachu",
   "description": "A nostalgic Pocket Pikachu with headset steps, original-style settings, a daily alarm and native controller play.",
   "author": "josethevrtech",
@@ -45,7 +45,7 @@
   ],
   "screenshots": [
     {
-      "url": "https://github.com/josethevrtech/magicshelf-pocket-pikachu/releases/download/v0.3.11/pocket-pikachu.png",
+      "url": "https://github.com/josethevrtech/magicshelf-pocket-pikachu/releases/download/v0.3.12/pocket-pikachu.png",
       "caption": "Pocket Pikachu\u2019s live pixel display inside Wikiti\u2019s yellow handheld model."
     }
   ]

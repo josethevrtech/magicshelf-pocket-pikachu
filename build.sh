@@ -10,6 +10,8 @@ cp runtime/host.js runtime/alarm.js runtime/device.js build/package/runtime/
 flags=(-O2 -std=c++17 -fPIC -pthread -DQT_NO_KEYWORDS -Isrc -I"$sdk/native/compat" -I"$sdk/native" '-DMAGICSHELF_CREATION_PROFILE="creation_profile.h"')
 c++ "${flags[@]}" tests/engine_test.cpp -o build/tests/engine_test $(pkg-config --cflags --libs Qt6Qml egl glesv2 cairo libpulse-simple)
 build/tests/engine_test "$PWD/build/package"
+c++ "${flags[@]}" tests/realtime_test.cpp -o build/tests/realtime_test $(pkg-config --cflags --libs Qt6Qml)
+build/tests/realtime_test "$PWD/build/package"
 c++ "${flags[@]}" tests/alarm_test.cpp -o build/tests/alarm_test $(pkg-config --cflags --libs Qt6Qml)
 build/tests/alarm_test "$PWD/build/package"
 c++ "${flags[@]}" tests/navigation_test.cpp -o build/tests/navigation_test $(pkg-config --cflags --libs Qt6Qml)
