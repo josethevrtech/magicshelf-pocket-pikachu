@@ -5,7 +5,7 @@
 #include <iostream>
 struct ControllerNav {
     vr::VRActionSetHandle_t set=0;
-    vr::VRActionHandle_t stick=0,confirm=0,back=0,friendship=0,settings=0,home=0,left=0,right=0,up=0,down=0;
+    vr::VRActionHandle_t stick=0,confirm=0,back=0,friendship=0,settings=0,home=0,left=0,right=0,up=0,down=0,grip=0;
     vr::VRInputValueHandle_t hand[2]{};
     bool available=false;int lastRole=0;PocketControllerState state;
     explicit ControllerNav(const std::string& base){
@@ -14,7 +14,7 @@ struct ControllerNav {
         error=input->GetActionSetHandle("/actions/pocket",&set);
         auto handle=[&](const char* name,vr::VRActionHandle_t& result){auto e=input->GetActionHandle((std::string("/actions/pocket/in/")+name).c_str(),&result);if(e)error=e;};
         handle("scroll",stick);handle("click",confirm);handle("back",back);handle("friendship",friendship);handle("settings",settings);handle("home",home);
-        handle("left",left);handle("right",right);handle("up",up);handle("down",down);
+        handle("grip",grip);handle("left",left);handle("right",right);handle("up",up);handle("down",down);
         input->GetInputSourceHandle("/user/hand/left",&hand[0]);input->GetInputSourceHandle("/user/hand/right",&hand[1]);
         available=error==vr::VRInputError_None;std::cerr<<"Pocket Pikachu controller actions ready="<<available<<"\n";
     }
@@ -31,6 +31,7 @@ struct ControllerNav {
         int focusRole=held?3:role;if(lastRole!=focusRole)state.update({},dt);lastRole=focusRole;
         auto downAction=[&](vr::VRActionHandle_t action,vr::VRInputValueHandle_t device){vr::InputDigitalActionData_t value{};return input->GetDigitalActionData(action,&value,sizeof(value),device)==vr::VRInputError_None&&value.bActive&&value.bState;};
         sample.focused=true;sample.held=held;
+        vr::InputDigitalActionData_t gripData{};sample.gripAvailable=input->GetDigitalActionData(grip,&gripData,sizeof(gripData),hand[role-1])==vr::VRInputError_None&&gripData.bActive;sample.grip=sample.gripAvailable&&gripData.bState;
         sample.confirm=downAction(confirm,source);sample.back=downAction(back,source);sample.friendship=downAction(friendship,source);sample.settings=downAction(settings,source);sample.home=downAction(home,source);
         sample.left=downAction(left,source);sample.right=downAction(right,source);sample.up=downAction(up,source);sample.down=downAction(down,source);
         auto axis=[&](vr::VRInputValueHandle_t device,float& x,float& y){

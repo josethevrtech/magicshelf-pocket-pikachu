@@ -3,13 +3,13 @@
 #include <cmath>
 struct PocketControllerState {
     struct Sample {
-        bool focused=false,held=false,axis=false,depthAxis=false;
+        bool focused=false,held=false,axis=false,depthAxis=false,grip=false,gripAvailable=false;
         float x=0,y=0,depthY=0;
         bool confirm=false,back=false,friendship=false,settings=false,home=false;
         bool left=false,right=false,up=false,down=false;
     } previous;
     struct Result {
-        bool confirm=false,back=false,friendship=false,settings=false,home=false,depth=false,depthAxis=false;
+        bool confirm=false,back=false,friendship=false,settings=false,home=false,depth=false,depthAxis=false,grip=false,gripPressed=false,gripAvailable=false;
         float depthY=0;int x=0,y=0;
     };
     bool neutralRequired=true;int direction=0;float repeat=0;
@@ -20,7 +20,9 @@ struct PocketControllerState {
     Result update(const Sample& s,float dt) {
         Result out;
         if(!s.focused){previous=s;neutralRequired=true;direction=0;repeat=0;return out;}
+        out.grip=s.grip;out.gripAvailable=s.gripAvailable;
         if(previous.focused){
+            out.gripPressed=s.gripAvailable&&s.grip&&!previous.grip;
             out.confirm=s.confirm&&!previous.confirm;out.back=s.back&&!previous.back;
             out.friendship=s.friendship&&!previous.friendship;out.settings=s.settings&&!previous.settings;
             out.home=s.home&&!previous.home;

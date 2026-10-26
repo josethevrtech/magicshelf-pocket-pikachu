@@ -26,5 +26,12 @@ int main(){try{
  require(grab.distance==after&&grab.pendingScrollDepth==0,"Axis and scroll must never double-count the same input");
  grab.queueScrollDepth(2,1,.01f);grab.end();grab.updateDepth(1,.022f,true);require(grab.distance==after,"Releasing clears queued movement");
  s.focused=false;s.home=true;r=state.update(s,.022f);require(!r.x&&!r.home&&!r.confirm&&!r.depthAxis,"Unfocused creation releases input");
- std::cout<<"Two-hand controls, direct push/pull, Frame scroll fallback and focus isolation passed\n";return 0;
+ PocketControllerState gripState;PocketControllerState::Sample grip;grip.focused=grip.gripAvailable=true;
+ grip.grip=true;require(!gripState.update(grip,.02f).gripPressed,"Already-held grip cannot pick up on focus gain");
+ grip.grip=false;gripState.update(grip,.02f);grip.grip=true;require(gripState.update(grip,.02f).gripPressed,"Fresh grip starts pickup");
+ require(!gripState.update(grip,.02f).gripPressed,"Holding grip cannot restart pickup");
+ grip.held=true;require(gripState.update(grip,.02f).grip,"Grip stays held after pickup");
+ grip.grip=false;require(!gripState.update(grip,.02f).grip,"Releasing grip places the handheld");
+ grip.focused=false;require(!gripState.update(grip,.02f).gripAvailable,"Tracking/focus loss releases the grip");
+ std::cout<<"Two-hand controls, grip pickup/release, direct push/pull, Frame scroll fallback and focus isolation passed\n";return 0;
 }catch(std::exception&e){std::cerr<<e.what()<<"\n";return 1;}}
