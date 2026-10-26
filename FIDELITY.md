@@ -23,7 +23,7 @@ rapid presses, repeated menu cycles, clock/alarm editing and concurrent steps.
 
 | Function | Current behavior / validation |
 | --- | --- |
-| Holding and placement | Holding stick directly pushes/pulls; free stick or D-pad navigates. Same RoomGrab depth implementation as the other creations. Includes Frame dashboard scroll fallback, source-hand checks and prevention of duplicate axis/scroll movement. |
+| Holding and placement | Either stick or left D-pad navigates while held. Holding-stick click plus vertical stick adjusts depth; no dashboard-scroll depth duplication. Shared RoomGrab placement and ShakeToDock detector match the other creations. Pickup/release/focus/recovery guards prevent held-input leaks. |
 | Physical controls | All nine controls ray-tested from the front and oblique angles; controller A/B/X/Y correspond to A/B/Select/Start. |
 | Start options | Original three entries: step counter Reset, Sound, Time Set. Sound is initially selected. |
 | Time setting | First-hatch setup plus later editing; saved per-pet clock offset drives clock, daily routines and alarm. OS clock and elapsed-playtime accounting stay independent. |
@@ -48,3 +48,34 @@ The new settings use a native pixel font; their layout is not a traced copy of
 the original LCD artwork. No unsupported claim of complete 1:1 accuracy is made.
 The original yellow model has no Color/2 GS communication or melody-composer
 features; these are not added to this creation.
+
+## 0.3.7 candidate audit (2026-10-26)
+
+Rechecked Nintendo's original yellow-device product page: walking, friendship,
+watt gifts, activities/reactions and the 100-times slot jackpot remain the target.
+The pinned upstream implementation supplies gifts, slots and routines; existing
+native tests cover menu entry, steps/watts, persistence, progression, clock, alarm,
+sound and reset. No new hardware-accuracy claim is made. Numeric rules already
+based on the owner instructions remain; Nintendo's short product page alone does
+not establish their exact values or odds. Color-model infrared and composition
+features remain outside this original-model target.
+
+Controller profile paths were checked against the installed SteamVR Frame driver.
+Its legacy mapping collapses B/X/Y (and several left D-pad directions), so raw
+button guesses cannot provide faithful controls. Named digital actions retain
+those distinctions; raw joystick axes are used only when analog actions are
+reserved by the dashboard. Physical routing still requires the headset.
+
+Dock pose math and SDK are the same as Digivice. The fixed 22 ms sleep plus work
+was unsynchronized with SteamVR; the candidate uses WaitFrameSync and records
+frame timing in runtime.json. This addresses a pacing risk; perceived moving-
+window jitter is not considered resolved until physical comparison. No global
+framework, dock configuration, save schema or creation identity is changed.
+
+Frame profiling isolated a repeated LCD stall: the display snapshot used generic
+DOM searches for its counter and three icons, each scanning the 1080-pixel tree.
+Stable references reduced measured snapshot time from roughly 18-21 ms to
+0.7-1.1 ms in the short Frame probe; total paint dropped from roughly 20-27 ms
+to 2.5-5.1 ms after warmup. Pixel transport is batched as a string. Runtime
+telemetry is atomically replaced without fsync; pet progress keeps durable saves.
+These are unattended measurements, not a physical moving-window comparison.

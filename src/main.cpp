@@ -71,10 +71,11 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
     check(ov->CreateOverlay(getenv("MAGICSHELF_MODULE_KEY")?getenv("MAGICSHELF_MODULE_KEY"):DeviceKey,AppTitle,&device));
     for(auto flag:{VROverlayFlags_SideBySide_Parallel,VROverlayFlags_VisibleInDashboard,VROverlayFlags_MakeOverlaysInteractiveIfVisible,VROverlayFlags_EnableClickStabilization,VROverlayFlags_SendVRSmoothScrollEvents})check(ov->SetOverlayFlag(device,flag,true));
     check(ov->SetOverlayInputMethod(device,VROverlayInputMethod_Mouse));HmdVector2_t mouse{{512,512}};check(ov->SetOverlayMouseScale(device,&mouse));
-    ObjectDock dock(ov,data);ControllerNav nav(package);RoomGrab grab;HeadsetPedometer pedometer;
+    ObjectDock dock(ov,data);ControllerNav nav(package);RoomGrab grab;ShakeToDock shake;HeadsetPedometer pedometer;
     Canvas lcd(ScreenWidth,ScreenHeight);M world=identity(),lastPlane=identity(),lastModel=identity();
     float size=DefaultSize,lastSize=1,lastWidth=InteractionPlaneWidth;bool docked=true,placed=false,ready=false,candidate=false;
     uint32_t pointer=k_unTrackedDeviceIndexInvalid;bool overHandle=false;auto now=std::chrono::steady_clock::now(),last=now,lastSave=now,lastLCD=now-std::chrono::seconds(1);
+    double frameMs=0,peakFrameMs=0;unsigned long frameCount=0,slowFrames=0,syncErrors=0;bool frameSync=false;
     unsigned long motionSamples=0,trackedSamples=0,motionSteps=0,controllerInputs=0,depthMoves=0;
     bool gripHeld=false;bool repositioning=false,startupPlacement=true;auto placementStarted=now;
     auto settings=data+"/placement.json";
@@ -86,10 +87,10 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
         json_object_put(j);
     }
     auto savePlacement=[&]{QJsonArray pose;for(float v:world)pose.append(v);QJsonObject j{{"size",size},{"docked",docked},{"pose",pose}};QSaveFile f(QString::fromStdString(settings));if(!f.open(QIODevice::WriteOnly))throw std::runtime_error("Cannot save placement");f.write(QJsonDocument(j).toJson());if(!f.commit())throw std::runtime_error("Cannot save placement");};
-    auto toDock=[&]{startupPlacement=true;placementStarted=std::chrono::steady_clock::now();showRequested=0;grab.end();docked=true;placed=false;candidate=false;savePlacement();};
-    auto release=[&]{if(dock.canSnap(world,size,candidate))toDock();else{grab.end();candidate=false;savePlacement();}};
+    auto toDock=[&]{startupPlacement=true;placementStarted=std::chrono::steady_clock::now();showRequested=0;grab.end();shake.reset();nav.state.update({},0);gripHeld=false;docked=true;placed=false;candidate=false;savePlacement();};
+    auto release=[&]{if(dock.canSnap(world,size,candidate))toDock();else{grab.end();shake.reset();candidate=false;savePlacement();}};
     while(running){
-        now=std::chrono::steady_clock::now();float dt=std::chrono::duration<float>(now-last).count();last=now;
+        now=std::chrono::steady_clock::now();float dt=std::chrono::duration<float>(now-last).count();last=now;frameMs=dt*1000;peakFrameMs=std::max(peakFrameMs,frameMs);++frameCount;if(frameMs>33.34)++slowFrames;
         game.tick(std::min(250.f,dt*1000));
         TrackedDevicePose_t poses[k_unMaxTrackedDeviceCount];VRSystem()->GetDeviceToAbsoluteTrackingPose(TrackingUniverseStanding,0,poses,k_unMaxTrackedDeviceCount);
         M head=fromvr(poses[0].mDeviceToAbsoluteTracking);dock.refresh();
@@ -113,11 +114,15 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
         if(now-lastSave>std::chrono::seconds(1)){
             game.save();lastSave=now;auto frame=game.snapshot();
             QJsonObject status{{"steps",frame.property("steps").toInt()},{"watts",frame.property("watts").toInt()},{"status",frame.property("status").toString()},
+                {"frame_ms",frameMs},{"peak_frame_ms",peakFrameMs},{"frame_count",double(frameCount)},{"slow_frames",double(slowFrames)},{"frame_sync",frameSync},{"sync_errors",double(syncErrors)},
                 {"motion_samples",double(motionSamples)},{"tracked_samples",double(trackedSamples)},{"motion_steps",double(motionSteps)},{"headset_worn",worn},{"headset_tracked",poses[0].bPoseIsValid},{"docked",docked},{"visible",ov->IsOverlayVisible(device)},
                 {"friendship",frame.property("friendship").toInt()},{"audio_connected",audio.ready()},{"audio_cues",int(audio.count())},
                 {"held",grab.active},{"grab_distance",grab.distance},{"depth_moves",double(depthMoves)},{"repositioning",repositioning},{"controller_inputs",double(controllerInputs)},
                 {"sound_enabled",frame.property("soundEnabled").toBool()},{"device_ui",frame.property("deviceUi").toString()},{"alarm_enabled",frame.property("alarmEnabled").toBool()},{"alarm_ringing",frame.property("alarmRinging").toBool()}};
-            QSaveFile f(QString::fromStdString(data+"/runtime.json"));if(f.open(QIODevice::WriteOnly)){f.write(QJsonDocument(status).toJson());f.commit();}
+            // Telemetry needs atomic replacement, not a durable fsync on the
+            // tracking thread. Pet saves retain QSaveFile durability.
+            auto telemetry=data+"/runtime.json";std::ofstream f(telemetry+".next");f<<QJsonDocument(status).toJson().constData();f.close();
+            if(f){std::error_code ec;fs::rename(telemetry+".next",telemetry,ec);}
         }
         if(grab.active){
             if(!poses[grab.controller].bPoseIsValid||!poses[0].bPoseIsValid)release();
@@ -126,9 +131,9 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
         while(ov->PollNextOverlayEvent(device,&e,sizeof(e))){
             if(dockResetEvent(e.eventType)){toDock();pedometer.reset();continue;}
             if(e.eventType==VREvent_ScrollSmooth&&grab.active){
-                auto source=e.trackedDeviceIndex;
-                if(source==0||source==k_unTrackedDeviceIndexInvalid)source=ov->GetPrimaryDashboardDevice();
-                grab.queueScrollDepth(source,e.data.scroll.ydelta,e.eventAgeSeconds);continue;
+                // Stick input is routed through ControllerNav, including its raw
+                // Frame fallback. Scroll must not also change placement.
+                continue;
             }
             if(e.eventType==VREvent_MouseButtonUp&&grab.active&&!gripHeld&&(e.trackedDeviceIndex==grab.controller||e.trackedDeviceIndex==k_unTrackedDeviceIndexInvalid||e.trackedDeviceIndex==0)){release();continue;}
             if(!poses[0].bPoseIsValid||(e.eventType!=VREvent_MouseMove&&e.eventType!=VREvent_MouseButtonDown))continue;
@@ -148,25 +153,34 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
                 V grabbed=point(lastModel,mul(hit,lastSize));
                 if(docked){world=lastModel;V restored=point(world,mul(hit,size));for(int i=0;i<3;i++)world[12+i]+=grabbed[i]-restored[i];docked=false;placed=true;}
                 VRControllerState_t state{};bool watch=VRSystem()->GetControllerState(index,&state,sizeof(state))&&(state.ulButtonPressed&ButtonMaskFromId(k_EButton_SteamVR_Trigger));
-                grab.beginAt(index,fromvr(poses[index].mDeviceToAbsoluteTracking),world,grabbed,watch);ov->TriggerLaserMouseHapticVibration(device,.03f,80,.2f);
+                shake.reset();grab.beginAt(index,fromvr(poses[index].mDeviceToAbsoluteTracking),world,grabbed,watch);ov->TriggerLaserMouseHapticVibration(device,.03f,80,.2f);
             }
         }
         uint32_t controller=grab.active?grab.controller:pointer;bool nearHand=false;
         if(!grab.active)for(auto handRole:{TrackedControllerRole_LeftHand,TrackedControllerRole_RightHand}){auto hand=VRSystem()->GetTrackedDeviceIndexForControllerRole(handRole);if(hand>=k_unMaxTrackedDeviceCount||!poses[hand].bPoseIsValid)continue;V local=mul(point(inverse(lastModel),point(fromvr(poses[hand].mDeviceToAbsoluteTracking),{0,0,0})),1/lastSize);if(std::abs(local[0])<BodyX+.07f&&std::abs(local[1])<BodyY+.07f&&std::abs(local[2]-ScreenZ)<.10f){controller=hand;nearHand=true;break;}}
-        bool focused=controller<k_unMaxTrackedDeviceCount&&poses[controller].bPoseIsValid&&poses[0].bPoseIsValid&&(grab.active||nearHand||ov->IsHoverTargetOverlay(device));
+        bool focused=(grab.active||(docked?dock.available:placed))&&controller<k_unMaxTrackedDeviceCount&&poses[controller].bPoseIsValid&&poses[0].bPoseIsValid&&(grab.active||nearHand||ov->IsHoverTargetOverlay(device));
         int role=focused?int(VRSystem()->GetControllerRoleForTrackedDeviceIndex(controller)):0;
         auto action=nav.update(focused,role,dt,grab.active,controller);repositioning=false;
+        bool wasHeld=grab.active;
         if(grab.active&&gripHeld&&(!action.gripAvailable||!action.grip)){release();gripHeld=false;}
         if(!grab.active&&focused&&action.gripPressed){
             V grabbed=point(lastModel,{0,0,0});if(docked){world=lastModel;docked=false;placed=true;}
-            grab.beginAt(controller,fromvr(poses[controller].mDeviceToAbsoluteTracking),world,grabbed,false);gripHeld=true;
+            shake.reset();grab.beginAt(controller,fromvr(poses[controller].mDeviceToAbsoluteTracking),world,grabbed,false);gripHeld=true;
             ov->TriggerLaserMouseHapticVibration(device,.035f,80,.25f);
         }
-        if(grab.active){float before=grab.distance;grab.updateDepth(action.depthY,dt,action.depthAxis);repositioning=std::abs(grab.distance-before)>.00001f;if(repositioning)++depthMoves;world=grab.follow(fromvr(poses[controller].mDeviceToAbsoluteTracking));candidate=dock.canSnap(world,size,candidate);}
-        if(focused){
+        bool inputTransition=false;
+        if(grab.active){float before=grab.distance;grab.updateDepth(action.depthY,dt,true);repositioning=std::abs(grab.distance-before)>.00001f;if(repositioning)++depthMoves;world=grab.follow(fromvr(poses[controller].mDeviceToAbsoluteTracking));candidate=dock.canSnap(world,size,candidate);}
+        if(grab.active){
+            M hand=fromvr(poses[grab.controller].mDeviceToAbsoluteTracking);
+            if(shake.update(sub(point(hand,{0,0,-.15f}),point(head,{0,0,0})),std::chrono::duration<double>(now.time_since_epoch()).count())){
+                ov->TriggerLaserMouseHapticVibration(device,.09f,100,.5f);toDock();inputTransition=true;
+            }
+        }else shake.reset();
+        if(focused&&!inputTransition&&wasHeld==grab.active){
             auto press=[&](const char* button){game.press(button);++controllerInputs;};
+            if(action.home){toDock();continue;}
             if(action.confirm)press("enter");if(action.back)press("back");if(action.friendship)press("state");if(action.settings)press("menu");
-            if(action.home)toDock();if(action.x)press(action.x>0?"right":"left");if(action.y)press(action.y>0?"top":"bottom");
+            if(action.x)press(action.x>0?"right":"left");if(action.y)press(action.y>0?"top":"bottom");
         }
         bool visible=poses[0].bPoseIsValid&&(docked?dock.available:placed);
         bool capture=fs::exists(data+"/capture.request");
@@ -181,7 +195,10 @@ static int runVR(Emulator& game,Renderer& renderer,HandheldAudio& audio,const st
             }else ov->HideOverlay(device);
         }else ov->HideOverlay(device);
         if(!ready){std::string pid=std::to_string(getpid());ftruncate(lock,0);pwrite(lock,pid.data(),pid.size(),0);game.save();if(getenv("MAGICSHELF_SESSION"))magicshelfReady();ready=true;std::cerr<<"Pocket Pikachu ready (native JavaScript, no browser)\n";}
-        std::this_thread::sleep_for(std::chrono::milliseconds(22));
+        // Sample dock/head/controller transforms at the runtime frame boundary,
+        // rather than drifting through a fixed sleep plus render time.
+        frameSync=ov->WaitFrameSync(20)==VROverlayError_None;
+        if(!frameSync){++syncErrors;std::this_thread::sleep_until(now+std::chrono::milliseconds(11));}
     }
     game.save();savePlacement();ov->DestroyOverlay(device);VR_Shutdown();return 0;
 }

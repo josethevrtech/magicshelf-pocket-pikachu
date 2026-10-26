@@ -2,8 +2,7 @@
 
 Hold a controller grip while pointing at the handheld or reaching near it to pick
 it up. Release the grip to place it. The existing trigger/housing pickup remains
-available. A/B/X/Y and the left D-pad operate the pet while held. The holding
-hand's stick adjusts distance; the free hand's stick navigates. A held button
+available. A/B/X/Y and the left D-pad operate the pet while held. Either stick navigates; holding-stick click plus vertical movement adjusts distance. A held button
 cannot fire a gameplay action when the creation first gains focus.
 
 When the Steam Bar dock is unavailable at startup, On opens the handheld in room
@@ -23,3 +22,38 @@ test. Frametop hand tracking is not included in this controller update.
 
 Fallback room positions use separate shelf slots rather than stacking creations
 at one location. Up to four creations share a row, with additional rows below.
+
+
+## 0.3.7 development candidate
+
+- Added the shared controller ShakeToDock gesture (previously absent here), with
+  head-relative tip sampling, pickup warmup, tracking reset and haptic feedback.
+- Either stick now plays while held. Holding-stick click is an explicit depth
+  modifier; left D-pad and A/B/X/Y retain their individual actions. Raw joystick
+  fallback handles dashboard ownership without guessing collapsed legacy buttons.
+- Suppress gameplay on pickup/release, adjustment transitions and shake recovery.
+- Use SteamVR frame synchronization instead of a fixed sleep; expose frame timing
+  for the moving-window comparison. Perceived jitter requires headset testing.
+- Permanent ID, save schema, data paths, subscriptions and other creations stay
+  intact. This is an unpublished test build.
+
+### Validation of the final candidate
+
+- Six native test executables passed in WSL and on Frame (engine, alarm,
+  navigation, progression, controller and motion). New checks cover display
+  snapshot equivalence, shake traces, depth modifier and transition input guards.
+- Frame-native 0.3.7 package installed through MagicShelf; On/Off round-trip kept
+  progress, sound and alarm. SteamVR PID 2561 and storefront PID 114962 stayed
+  unchanged; other creations retained their versions, enabled state and subscriptions.
+- LCD profiling before/after is recorded in the framework workspace under
+  outputs/pikachu-0.3.7. Snapshot cost fell from about 18-21 ms to around 1 ms.
+  The final runtime counted one slow frame during startup and no further >33 ms
+  frames over its next 1,248 loops in this unattended sample. Tracking was
+  intermittent and the headset was not worn; this is not motion validation.
+- Public stable remains 0.3.5. No release, catalog update or Pages site was published.
+
+Physical checks before release: hold in each hand and try both sticks, the left
+D-pad and A/B/X/Y; use holding-stick click + vertical movement for depth; release
+with a stick deflected and verify no menu input until centered; shake deliberately
+and verify dock return without re-pickup; move the Steam window and compare
+Pocket Pikachu with Digivice. Check dashboard open and closed.

@@ -13,9 +13,11 @@ inline void drawLCD(Canvas& canvas, const QJSValue& frame) {
         cairo_save(canvas.c);cairo_scale(canvas.c,double(canvas.w)/cairo_image_surface_get_width(background.get()),double(canvas.h)/cairo_image_surface_get_height(background.get()));
         cairo_set_source_surface(canvas.c,background.get(),0,0);cairo_paint_with_alpha(canvas.c,.45);cairo_restore(canvas.c);
     }
-    auto pixels=frame.property("pixels");
+    // Transfer the complete LCD through Qt once, rather than 1080 JS property
+    // lookups on the tracking/render thread.
+    const auto pixels=frame.property("pixelLevels").toString();
     for(int y=0;y<30;y++)for(int x=0;x<36;x++) {
-        const int level=pixels.property(y*36+x).toInt();
+        const int n=y*36+x;const int level=n<pixels.size()?pixels[n].digitValue():0;
         if(level)canvas.rect(63+x*6.5,43+y*6.5,5.8,5.8,level==1?.48:.15,level==1?.54:.21,level==1?.36:.12);
     }
     // Native outlines retain the muted, reflective LCD appearance.

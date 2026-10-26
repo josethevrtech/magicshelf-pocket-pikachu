@@ -5,7 +5,7 @@
 #include <iostream>
 struct ControllerNav {
     vr::VRActionSetHandle_t set=0;
-    vr::VRActionHandle_t stick=0,confirm=0,back=0,friendship=0,settings=0,home=0,left=0,right=0,up=0,down=0,grip=0;
+    vr::VRActionHandle_t stick=0,adjust=0,confirm=0,back=0,friendship=0,settings=0,home=0,left=0,right=0,up=0,down=0,grip=0;
     vr::VRInputValueHandle_t hand[2]{};
     bool available=false;int lastRole=0;PocketControllerState state;
     explicit ControllerNav(const std::string& base){
@@ -13,7 +13,7 @@ struct ControllerNav {
         if(error){std::cerr<<"Pocket Pikachu action manifest error "<<error<<"\n";return;}
         error=input->GetActionSetHandle("/actions/pocket",&set);
         auto handle=[&](const char* name,vr::VRActionHandle_t& result){auto e=input->GetActionHandle((std::string("/actions/pocket/in/")+name).c_str(),&result);if(e)error=e;};
-        handle("scroll",stick);handle("click",confirm);handle("back",back);handle("friendship",friendship);handle("settings",settings);handle("home",home);
+        handle("scroll",stick);handle("adjust",adjust);handle("click",confirm);handle("back",back);handle("friendship",friendship);handle("settings",settings);handle("home",home);
         handle("grip",grip);handle("left",left);handle("right",right);handle("up",up);handle("down",down);
         input->GetInputSourceHandle("/user/hand/left",&hand[0]);input->GetInputSourceHandle("/user/hand/right",&hand[1]);
         available=error==vr::VRInputError_None;std::cerr<<"Pocket Pikachu controller actions ready="<<available<<"\n";
@@ -39,16 +39,22 @@ struct ControllerNav {
             if(input->GetAnalogActionData(stick,&value,sizeof(value),device)!=vr::VRInputError_None||!value.bActive)return false;
             x=value.x;y=value.y;return true;
         };
-        // Never merge the sticks while held: the owner controls placement,
-        // the other hand controls the pet. Digital D-pad/buttons work on both.
-        sample.axis=axis(held?hand[2-role]:source,sample.x,sample.y);
-        if(held){
-            float unused=0;sample.depthAxis=axis(hand[role-1],unused,sample.depthY);
-            if(!sample.depthAxis&&controller<vr::k_unMaxTrackedDeviceCount){
-                vr::VRControllerState_t raw{};
-                if(vr::VRSystem()->GetControllerState(controller,&raw,sizeof(raw)))for(int n=0;n<5;n++)
-                    if(vr::VRSystem()->GetInt32TrackedDeviceProperty(controller,(vr::ETrackedDeviceProperty)(vr::Prop_Axis0Type_Int32+n))==vr::k_eControllerAxis_Joystick){sample.depthAxis=true;sample.depthY=raw.rAxis[n].y;break;}
-            }
+        // Prefer the holding stick when deflected; otherwise use the free stick.
+        // Frame can reserve analog actions for dashboard scroll, so read the
+        // physical joystick as a fallback from the same tracked controller.
+        auto readStick=[&](int r,float& x,float& y){
+            if(axis(hand[r-1],x,y))return true;
+            auto index=vr::VRSystem()->GetTrackedDeviceIndexForControllerRole((vr::ETrackedControllerRole)r);
+            vr::VRControllerState_t raw{};
+            if(index>=vr::k_unMaxTrackedDeviceCount||!vr::VRSystem()->GetControllerState(index,&raw,sizeof(raw)))return false;
+            for(int n=0;n<5;n++)if(vr::VRSystem()->GetInt32TrackedDeviceProperty(index,(vr::ETrackedDeviceProperty)(vr::Prop_Axis0Type_Int32+n))==vr::k_eControllerAxis_Joystick){x=raw.rAxis[n].x;y=raw.rAxis[n].y;return true;}
+            return false;
+        };
+        sample.axis=readStick(role,sample.x,sample.y);
+        sample.adjust=held&&downAction(adjust,hand[role-1]);
+        sample.depthAxis=held&&sample.axis;sample.depthY=sample.y;
+        if(held&&!sample.adjust&&std::max(std::abs(sample.x),std::abs(sample.y))<=.25f){
+            float x=0,y=0;if(readStick(3-role,x,y)){sample.axis=true;sample.x=x;sample.y=y;}
         }
         return state.update(sample,dt);
     }
