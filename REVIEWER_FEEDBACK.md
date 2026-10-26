@@ -109,3 +109,10 @@ rules or gesture thresholds changed. Seven native suites passed on Frame; a new
 aggregate), preserved queued steps and verified startup error handling. On/Off
 kept progress and other creations; SteamVR PID 2561 and storefront PID 114962
 were unchanged. Physical drag/shake testing is pending. No public update published.
+
+The user reported 0.3.12 is much better during the requested headset test.
+0.3.13 adds a beginner guide to the creation's About description: startup, Frame
+controls, top-icon navigation, steps/watts, gifts, slots, settings/alarm and
+placement. The 1,883-character description passes the 2,000-character contract.
+Installed 0.3.13 has the identical binary to tested 0.3.12; other creations and
+SteamVR/storefront PIDs remained unchanged. This candidate is not published.
